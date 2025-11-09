@@ -1,0 +1,47 @@
+// ===============================================
+// Problem Statement – 6
+// Aim: Perform MongoDB MapReduce on a customer dataset.
+// Fields: cid, cname, amount, product_name
+// ===============================================
+
+// Step 1: Create or switch to the database
+use RetailDB;
+
+// Step 2: Insert sample data into the collection
+db.customer.insertMany([
+  { cid: 1, cname: "Ravi", amount: 500, product_name: "Laptop" },
+  { cid: 2, cname: "Sneha", amount: 300, product_name: "Phone" },
+  { cid: 1, cname: "Ravi", amount: 200, product_name: "Mouse" },
+  { cid: 3, cname: "Karan", amount: 400, product_name: "Keyboard" },
+  { cid: 2, cname: "Sneha", amount: 100, product_name: "Charger" }
+]);
+
+// ===============================================
+// Step 3: Define the Map and Reduce Functions
+// ===============================================
+
+// Map function emits customer name and their amount spent
+var mapFunction = function() {
+    emit(this.cname, this.amount);
+};
+
+// Reduce function adds up all the amounts for each customer
+var reduceFunction = function(key, values) {
+    return Array.sum(values);
+};
+
+// ===============================================
+// Step 4: Execute MapReduce
+// ===============================================
+
+db.customer.mapReduce(
+    mapFunction,
+    reduceFunction,
+    { out: "customer_total_amount" }
+);
+
+// ===============================================
+// Step 5: View Aggregated Total Spending per Customer
+// ===============================================
+
+db.customer_total_amount.find().pretty();

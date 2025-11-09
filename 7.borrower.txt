@@ -1,0 +1,130 @@
+-- ============================================================
+-- PROBLEM STATEMENT
+-- ============================================================
+-- Design and implement a stored procedure in MySQL to handle 
+-- the book return process in a library system.
+-- The procedure should:
+--   → Calculate fine based on number of days borrowed.
+--   → Update borrower’s status to 'Returned'.
+--   → Record fine details if applicable.
+--   → Use IF–ELSEIF control structures and exception handling.
+-- ============================================================
+
+
+-- ============================================================
+-- STEP 1: CREATE DATABASE
+-- ============================================================
+CREATE DATABASE LibraryDB;
+USE LibraryDB;
+
+
+-- ============================================================
+-- STEP 2: CREATE TABLES
+-- ============================================================
+
+-- Borrower Table
+CREATE TABLE Borrower (
+    Roll_no INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Date_of_Issue DATE,
+    Name_of_Book VARCHAR(100),
+    Status CHAR(1)
+);
+
+-- Fine Table
+CREATE TABLE Fine (
+    Roll_no INT,
+    Date_of_Fine DATE,
+    Amt DECIMAL(10,2)
+);
+
+
+-- ============================================================
+-- STEP 3: INSERT SAMPLE DATA
+-- ============================================================
+INSERT INTO Borrower VALUES 
+(1, 'Ravi', '2025-10-01', 'Book A', 'I'),
+(2, 'Sneha', '2025-10-15', 'Book B', 'I'),
+(3, 'Karan', '2025-11-01', 'Book C', 'I');
+
+
+-- ============================================================
+-- STEP 4: CREATE STORED PROCEDURE
+-- ============================================================
+
+DELIMITER $$
+
+CREATE PROCEDURE ReturnBook(IN p_Roll_no INT, IN p_Book VARCHAR(100))
+BEGIN
+    DECLARE v_issue_date DATE;
+    DECLARE v_status CHAR(1);
+    DECLARE v_days INT;
+    DECLARE v_fine DECIMAL(10,2) DEFAULT 0;
+
+    -- Error Handler for SQL Exceptions
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SELECT 'An error occurred while processing the return.' AS Message;
+    END;
+
+    -- Retrieve issue details for the given Roll_no and Book
+    SELECT Date_of_Issue, Status INTO v_issue_date, v_status
+    FROM Borrower
+    WHERE Roll_no = p_Roll_no AND Name_of_Book = p_Book;
+
+    -- Check if the book is currently issued
+    IF v_status = 'I' THEN
+        SET v_days = DATEDIFF(CURDATE(), v_issue_date);
+
+        -- Fine Calculation Logic
+        IF v_days BETWEEN 15 AND 30 THEN
+            SET v_fine = v_days * 5;
+        ELSEIF v_days > 30 THEN
+            SET v_fine = 30 * 5 + (v_days - 30) * 50;
+        ELSE
+            SET v_fine = 0;
+        END IF;
+
+        -- Update Borrower table (mark book as Returned)
+        UPDATE Borrower
+        SET Status = 'R'
+        WHERE Roll_no = p_Roll_no AND Name_of_Book = p_Book;
+
+        -- Insert into Fine table if fine is applicable
+        IF v_fine > 0 THEN
+            INSERT INTO Fine(Roll_no, Date_of_Fine, Amt)
+            VALUES(p_Roll_no, CURDATE(), v_fine);
+        END IF;
+
+        -- Display confirmation message
+        SELECT CONCAT('Book returned successfully. Fine: Rs ', v_fine) AS Message;
+    ELSE
+        SELECT 'Book is already returned or record not found.' AS Message;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+-- ============================================================
+-- STEP 5: EXECUTE THE PROCEDURE
+-- ============================================================
+CALL ReturnBook(1, 'Book A');
+
+
+-- ============================================================
+-- STEP 6: VERIFY UPDATED TABLES
+-- ============================================================
+SELECT * FROM Borrower;
+SELECT * FROM Fine;
+
+
+-- ============================================================
+-- OUTPUT EXPECTATIONS
+-- ============================================================
+-- Case 1: Returned within 14 days → Fine: Rs 0
+-- Case 2: Returned after 20 days → Fine: Rs 100
+-- Case 3: Returned after 45 days → Fine: Rs 900
+-- Case 4: Already returned → "Book is already returned or record not found."
+-- Case 5: SQL error → "An error occurred while processing the return."
+-- ============================================================

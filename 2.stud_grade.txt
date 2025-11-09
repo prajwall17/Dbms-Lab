@@ -1,0 +1,85 @@
+-- Problem Statement 2: Categorize students into grades based on their marks using a stored procedure.
+
+-- --------------------------------------------------------
+-- STEP 0: CREATE AND USE DATABASE
+-- --------------------------------------------------------
+
+CREATE DATABASE StudentGradesDB;
+USE StudentGradesDB;
+
+-- --------------------------------------------------------
+-- STEP 1: CREATE TABLES
+-- --------------------------------------------------------
+
+CREATE TABLE Stud_Marks (
+  name VARCHAR(30),
+  total_marks INT
+);
+
+CREATE TABLE Result (
+  roll INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(30),
+  class VARCHAR(30)
+);
+
+-- --------------------------------------------------------
+-- STEP 2: INSERT SAMPLE DATA
+-- --------------------------------------------------------
+
+INSERT INTO Stud_Marks VALUES
+('Riya', 1450),
+('Aarav', 960),
+('Meera', 880),
+('Kiran', 800);
+
+-- --------------------------------------------------------
+-- STEP 3: CREATE STORED PROCEDURE
+-- --------------------------------------------------------
+
+DELIMITER //
+
+CREATE PROCEDURE proc_Grade()
+BEGIN
+  DECLARE done INT DEFAULT 0;
+  DECLARE v_name VARCHAR(30);
+  DECLARE v_marks INT;
+  DECLARE v_class VARCHAR(30);
+  DECLARE cur CURSOR FOR SELECT name, total_marks FROM Stud_Marks;
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+  OPEN cur;
+  read_loop: LOOP
+    FETCH cur INTO v_name, v_marks;
+    IF done THEN
+      LEAVE read_loop;
+    END IF;
+
+    IF v_marks BETWEEN 990 AND 1500 THEN
+      SET v_class = 'Distinction';
+    ELSEIF v_marks BETWEEN 900 AND 989 THEN
+      SET v_class = 'First Class';
+    ELSEIF v_marks BETWEEN 825 AND 899 THEN
+      SET v_class = 'Higher Second Class';
+    ELSE
+      SET v_class = 'Fail';
+    END IF;
+
+    INSERT INTO Result(name, class) VALUES (v_name, v_class);
+  END LOOP;
+  CLOSE cur;
+END;
+//
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+-- STEP 4: EXECUTE STORED PROCEDURE
+-- --------------------------------------------------------
+
+CALL proc_Grade();
+
+-- --------------------------------------------------------
+-- STEP 5: DISPLAY FINAL RESULTS
+-- --------------------------------------------------------
+
+SELECT * FROM Result;

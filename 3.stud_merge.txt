@@ -1,0 +1,96 @@
+-- ============================================
+-- 🧩 Problem Statement 3
+-- Write a PL/SQL block (MySQL Stored Procedure) using a parameterized cursor
+-- to merge data from N_Roll_Call into O_Roll_Call.
+-- If a record already exists in O_Roll_Call, it should be skipped.
+-- ============================================
+
+
+-- --------------------------------------------------------
+-- STEP 0: CREATE AND USE DATABASE
+-- --------------------------------------------------------
+
+CREATE DATABASE RollCallDB;
+USE RollCallDB;
+
+-- --------------------------------------------------------
+-- STEP 1: CREATE TABLES
+-- --------------------------------------------------------
+
+CREATE TABLE O_Roll_Call (
+  roll_no INT,
+  student_name VARCHAR(30),
+  attendance_date DATE
+);
+
+CREATE TABLE N_Roll_Call (
+  roll_no INT,
+  student_name VARCHAR(30),
+  attendance_date DATE
+);
+
+-- --------------------------------------------------------
+-- STEP 2: INSERT SAMPLE DATA
+-- --------------------------------------------------------
+
+INSERT INTO O_Roll_Call VALUES 
+(1, 'Neha', '2024-11-01'),
+(2, 'Arjun', '2024-11-01');
+
+INSERT INTO N_Roll_Call VALUES 
+(2, 'Arjun', '2024-11-01'),
+(3, 'Rohit', '2024-11-02'),
+(4, 'Isha', '2024-11-02');
+
+-- --------------------------------------------------------
+-- STEP 3: CREATE STORED PROCEDURE
+-- --------------------------------------------------------
+
+DELIMITER $$
+
+CREATE PROCEDURE merge_rollcall()
+BEGIN
+    DECLARE n_roll INT;
+    DECLARE n_name VARCHAR(50);
+    DECLARE n_date DATE;
+    DECLARE done INT DEFAULT 0;
+    DECLARE cnt INT DEFAULT 0;
+
+    DECLARE cur CURSOR FOR 
+        SELECT roll_no, student_name, attendance_date FROM N_Roll_Call;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO n_roll, n_name, n_date;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        SELECT COUNT(*) INTO cnt 
+        FROM O_Roll_Call 
+        WHERE roll_no = n_roll AND attendance_date = n_date;
+
+        IF cnt = 0 THEN
+            INSERT INTO O_Roll_Call VALUES (n_roll, n_name, n_date);
+        END IF;
+    END LOOP;
+
+    CLOSE cur;
+END$$
+
+DELIMITER ;
+
+-- --------------------------------------------------------
+-- STEP 4: EXECUTE STORED PROCEDURE
+-- --------------------------------------------------------
+
+CALL merge_rollcall();
+
+-- --------------------------------------------------------
+-- STEP 5: DISPLAY FINAL MERGED DATA
+-- --------------------------------------------------------
+
+SELECT * FROM O_Roll_Call;

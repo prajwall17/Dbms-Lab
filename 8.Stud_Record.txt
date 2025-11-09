@@ -1,0 +1,120 @@
+-- ============================================================
+-- PROBLEM STATEMENT
+-- ============================================================
+-- Design and implement a student management database system in MySQL 
+-- to demonstrate:
+--   → Table creation for student records
+--   → Index creation for performance optimization
+--   → View creation for summarizing data
+--   → Use of CASE statement for conditional remarks in views
+-- ============================================================
+
+
+-- ============================================================
+-- STEP 1: CREATE DATABASE
+-- ============================================================
+CREATE DATABASE StudentDB;
+USE StudentDB;
+
+
+-- ============================================================
+-- STEP 2: CREATE STUDENT TABLE
+-- ============================================================
+CREATE TABLE Student (
+    Student_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Student_Name VARCHAR(50),
+    Class VARCHAR(20),
+    Address VARCHAR(100),
+    Subject_Name VARCHAR(50),
+    Grades CHAR(2),
+    Attendance INT,                -- Attendance percentage
+    Enrollment_Date DATE
+);
+
+
+-- ============================================================
+-- STEP 3: INSERT SAMPLE DATA
+-- ============================================================
+INSERT INTO Student (Student_Name, Class, Address, Subject_Name, Grades, Attendance, Enrollment_Date)
+VALUES
+('Ronit', 'FY BTech AI-DS', 'Pune', 'Mathematics', 'A', 92, '2025-07-01'),
+('Aditya', 'FY BTech AI-DS', 'Mumbai', 'Data Science', 'B+', 85, '2025-07-01'),
+('Rony', 'FY BTech AI-DS', 'Nashik', 'Programming', 'A', 95, '2025-07-01'),
+('Tony', 'FY BTech AI-DS', 'Kolhapur', 'Physics', 'B', 70, '2025-07-01');
+
+
+-- ============================================================
+-- STEP 4: CREATE INDEX ON STUDENT NAME
+-- ============================================================
+CREATE INDEX idx_student_name ON Student (Student_Name);
+
+
+-- ============================================================
+-- STEP 5: CREATE VIEW – STUDENT PERFORMANCE SUMMARY
+-- ============================================================
+CREATE OR REPLACE VIEW vw_student_performance AS
+SELECT 
+    Student_Name,
+    Class,
+    Subject_Name,
+    Grades
+FROM Student;
+
+
+-- ============================================================
+-- STEP 6: CREATE VIEW – ATTENDANCE SUMMARY WITH REMARKS
+-- ============================================================
+CREATE OR REPLACE VIEW vw_attendance_summary AS
+SELECT 
+    Student_Name,
+    Class,
+    Attendance,
+    CASE 
+        WHEN Attendance >= 90 THEN 'Excellent'
+        WHEN Attendance BETWEEN 75 AND 89 THEN 'Good'
+        ELSE 'Needs Improvement'
+    END AS Attendance_Remark
+FROM Student;
+
+
+-- ============================================================
+-- STEP 7: DISPLAY DATA FROM VIEWS
+-- ============================================================
+SELECT * FROM vw_student_performance;
+SELECT * FROM vw_attendance_summary;
+
+
+-- ============================================================
+-- STEP 8: SHOW INDEX DETAILS
+-- ============================================================
+SHOW INDEX FROM Student;
+
+
+-- ============================================================
+-- OUTPUT SUMMARY
+-- ============================================================
+-- View 1: vw_student_performance
+-- → Displays academic performance data
+--   Columns: Student_Name | Class | Subject_Name | Grades
+--
+-- View 2: vw_attendance_summary
+-- → Displays attendance performance with remarks
+--   Columns: Student_Name | Class | Attendance | Attendance_Remark
+--
+-- SHOW INDEX FROM Student:
+-- → Displays details of created index (idx_student_name)
+--   Columns: Table | Non_unique | Key_name | Seq_in_index | Column_name
+-- ============================================================
+
+
+-- ============================================================
+-- KEY CONCEPTS USED
+-- ============================================================
+-- 1. CREATE TABLE – Defines student information schema.
+-- 2. AUTO_INCREMENT – Automatically generates unique Student_ID.
+-- 3. CREATE INDEX – Improves search/sort performance on Student_Name.
+-- 4. VIEW – Virtual table created from SELECT queries.
+-- 5. CASE Expression – Implements conditional logic for remarks.
+-- 6. SELECT * FROM view_name – Retrieves summarized data from views.
+-- 7. SHOW INDEX – Displays metadata about created indexes.
+-- ============================================================
